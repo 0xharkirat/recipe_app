@@ -1,87 +1,30 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/models/ingredient_model.dart';
 
-class IngredientsController extends Notifier<List<IngredientModel>> {
-  static final List<IngredientModel> _mockIngredients = [
-    IngredientModel(
-      id: 1,
-      name: 'Black Bean',
-      pictureUrl: null,
-      kilojoulesPerUnit: 14.27,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 2,
-      name: 'Chicken Broth',
-      pictureUrl: null,
-      kilojoulesPerUnit: 1.51,
-      unitOfMeasurement: 'ml',
-    ),
-    IngredientModel(
-      id: 3,
-      name: 'Beef',
-      pictureUrl: null,
-      kilojoulesPerUnit: 6.28,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 4,
-      name: 'Cauliflower',
-      pictureUrl: null,
-      kilojoulesPerUnit: 1.05,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 5,
-      name: 'Salt',
-      pictureUrl: null,
-      kilojoulesPerUnit: 0,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 6,
-      name: 'Olive Oil',
-      pictureUrl: null,
-      kilojoulesPerUnit: 36.99,
-      unitOfMeasurement: 'ml',
-    ),
-    IngredientModel(
-      id: 7,
-      name: 'Tomato',
-      pictureUrl: null,
-      kilojoulesPerUnit: 0.75,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 8,
-      name: 'Garlic',
-      pictureUrl: null,
-      kilojoulesPerUnit: 6.23,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 9,
-      name: 'Pepper',
-      pictureUrl: null,
-      kilojoulesPerUnit: 10.67,
-      unitOfMeasurement: 'g',
-    ),
-    IngredientModel(
-      id: 10,
-      name: 'Onion',
-      pictureUrl: null,
-      kilojoulesPerUnit: 1.76,
-      unitOfMeasurement: 'g',
-    ),
-  ];
-
+class IngredientsController extends AsyncNotifier<List<IngredientModel>> {
+  static final _dio = Dio();
   @override
-  List<IngredientModel> build() {
-    return _mockIngredients;
+  FutureOr<List<IngredientModel>> build() async {
+    return await getIngredients();
+  }
+
+  getIngredients() async {
+    final response = await _dio.get("http://localhost:5143/Ingredients");
+    if (response.statusCode == 200) {
+      final List<dynamic> data = response.data;
+      return data
+          .map((ingredient) => IngredientModel.fromJson(ingredient))
+          .toList();
+    } else {
+      throw Exception("Failed to load ingredients");
+    }
   }
 }
 
 final ingredientsService =
-    NotifierProvider<IngredientsController, List<IngredientModel>>(
+    AsyncNotifierProvider<IngredientsController, List<IngredientModel>>(
       IngredientsController.new,
     );

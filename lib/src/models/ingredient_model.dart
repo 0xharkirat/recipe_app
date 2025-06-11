@@ -1,22 +1,18 @@
-class IngredientModel {
-  final int id;
-  final String name;
-  final String? pictureUrl;
-  final double kilojoulesPerUnit;
-  final String unitOfMeasurement;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const IngredientModel({
-    required this.id,
-    required this.name,
-    this.pictureUrl,
-    required this.kilojoulesPerUnit,
-    required this.unitOfMeasurement,
-  });
+part 'ingredient_model.freezed.dart';
 
-  @override
-  String toString() {
-    return "IngredientModel(id: $id, name: $name)";
-  }
+part 'ingredient_model.g.dart';
+
+@freezed
+abstract class IngredientModel with _$IngredientModel {
+  const factory IngredientModel({
+    required int id,
+    required String name,
+    String? pictureUrl,
+    required double kilojoulesPerUnit,
+    required String unitOfMeasurement,
+  }) = _IngredientModel;
+
+  factory IngredientModel.fromJson(Map<String, dynamic> json) => _$IngredientModelFromJson(json);
 }
-
-
