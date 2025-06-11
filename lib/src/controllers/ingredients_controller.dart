@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/models/ingredient_model.dart';
 
@@ -21,6 +22,34 @@ class IngredientsController extends AsyncNotifier<List<IngredientModel>> {
     } else {
       throw Exception("Failed to load ingredients");
     }
+  }
+
+  Future<void> addIngredient(Map<String, dynamic> ingredient) async {
+
+    ingredient = {
+      ...ingredient,
+      "id": getLength() + 1, // Simple ID generation
+    };
+
+    debugPrint("Adding ingredient: $ingredient");
+
+    final ingredientModel = IngredientModel.fromJson(ingredient);
+
+    state = AsyncValue.data([...state.value ?? [], ingredientModel]);
+
+    // final response = await _dio.post(
+    //   "http://localhost:5143/Ingredients",
+    //   data: ingredient.toJson(),
+    // );
+    // if (response.statusCode == 201) {
+    //   state = AsyncValue.data([...state.value ?? [], ingredient]);
+    // } else {
+    //   throw Exception("Failed to add ingredient");
+    // }
+  }
+
+  int getLength() {
+    return state.value?.length ?? 0;
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/controllers/ingredients_controller.dart';
 import 'package:recipe_app/src/models/ingredient_model.dart';
+import 'package:recipe_app/src/views/widgets/add_ingredient_dialog.dart';
 
 class IngredientsScreen extends ConsumerWidget {
   const IngredientsScreen({super.key});
@@ -16,9 +17,40 @@ class IngredientsScreen extends ConsumerWidget {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       body: ingredientsAsync.when(
-        data: (ingredients) => _IngredientsList(ingredients: ingredients),
+        data: (ingredients) => RefreshIndicator.adaptive(
+          child: _IngredientsList(ingredients: ingredients),
+          onRefresh: () async {
+            // await Future.delayed(const Duration(seconds: 1));
+            return await ref.refresh(ingredientsService.future);
+          },
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text("Error: $error")),
+        error: (error, _) => Center(
+          child: Column(
+            children: [
+              Text("Error: $error"),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: () {
+                  // ignore: unused_result
+                  ref.refresh(ingredientsService);
+                },
+                child: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(context: context, builder: (_) {
+            return AddIngredientDialog();
+          });
+        },
+        tooltip: "Add Ingredient",
+        child: Icon(Icons.add),
       ),
     );
   }
