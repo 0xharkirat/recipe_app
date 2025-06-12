@@ -7,10 +7,13 @@ class AddIngredientDialog extends ConsumerStatefulWidget {
   const AddIngredientDialog({super.key});
 
   @override
-  ConsumerState<AddIngredientDialog> createState() => _AddIngredientDialogState();
+  ConsumerState<AddIngredientDialog> createState() =>
+      _AddIngredientDialogState();
 }
 
 class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
+  static const placeholderImage =
+      "https://placehold.co/250/png?text=Preview+Image";
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
 
@@ -37,8 +40,6 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
 
       ref.read(ingredientsService.notifier).addIngredient(newIngredient);
 
-
-
       // Navigator.of(context).pop(); // Close the dialog
     }
   }
@@ -54,99 +55,129 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 16.0,
-          children: [
-            Text(
-              "Add Ingredient",
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+    final size = MediaQuery.of(context).size;
+    return Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Add Ingredient"),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 16.0,
+              children: [
+                Builder(
+                  builder: (context) {
+                    final imageUrl = _urlController.text.trim();
 
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: "Name"),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Ingredient name cannot be empty";
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _urlController,
-                    decoration: const InputDecoration(labelText: "Image URL"),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return null;
-                      }
-                      // A simple URL validation using regex
-                      final urlPattern =
-                          r'^(https:\/\/)([\w-]+(\.[\w-]+)+)(\/[\w- .\/?%&=]*)?$';
-                      final isValidUrl = RegExp(urlPattern).hasMatch(value);
-                      if (!isValidUrl) {
-                        return "Must be a valid URL (https://example.com)";
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _kjPUcontroller,
+                    return Image.network(
+                      (imageUrl.isEmpty) ? placeholderImage : imageUrl,
+                      height: size.width * 0.5,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Always show the placeholder image if error occurs
+                        return Image.network(
+                          placeholderImage,
+                          height: size.width * 0.5,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    );
+                  },
+                ),
 
-                    decoration: const InputDecoration(
-                      labelText: "Kilojoules per unit",
-                    ),
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d*'),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(labelText: "Name"),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Ingredient name cannot be empty";
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: _urlController,
+                        decoration: const InputDecoration(
+                          labelText: "Image URL",
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return null;
+                          }
+                          // A simple URL validation using regex
+                          final urlPattern =
+                              r'^(https:\/\/)([\w-]+(\.[\w-]+)+)(\/[\w- .\/?%&=]*)?$';
+                          final isValidUrl = RegExp(urlPattern).hasMatch(value);
+                          if (!isValidUrl) {
+                            return "Must be a valid URL (https://example.com)";
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        controller: _kjPUcontroller,
+
+                        decoration: const InputDecoration(
+                          labelText: "Kilojoules per unit",
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Please enter KJ per unit";
+                          }
+                          return null;
+                        },
                       ),
                     ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter KJ per unit";
-                      }
-                      return null;
-                    },
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            DropdownButtonFormField<UnitOfMeasurement>(
-              decoration: InputDecoration(labelText: 'Unit of Measurement'),
-              items: UnitOfMeasurement.values
-                  .map(
-                    (unit) => DropdownMenuItem(
-                      value: unit,
-                      child: Text("${unit.fullName} (${unit.name})"),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                // Save value
-                if (value != null) {
-                  _selectedUnit = value;
-                }
-              },
-              validator: (value) =>
-                  value == null ? 'Please select a unit' : null,
-            ),
+                DropdownButtonFormField<UnitOfMeasurement>(
+                  decoration: InputDecoration(labelText: 'Unit of Measurement'),
+                  items: UnitOfMeasurement.values
+                      .map(
+                        (unit) => DropdownMenuItem(
+                          value: unit,
+                          child: Text("${unit.fullName} (${unit.name})"),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    // Save value
+                    if (value != null) {
+                      _selectedUnit = value;
+                    }
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select a unit' : null,
+                ),
 
-            ElevatedButton(
-              onPressed: () => onSave(),
-              child: const Text("Save"),
+                ElevatedButton(
+                  onPressed: () => onSave(),
+                  child: const Text("Save"),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

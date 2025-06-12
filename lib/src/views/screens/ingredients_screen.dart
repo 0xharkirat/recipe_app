@@ -45,9 +45,13 @@ class IngredientsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(context: context, builder: (_) {
-            return AddIngredientDialog();
-          });
+          showDialog(
+            context: context,
+            useSafeArea: false,
+            builder: (_) {
+              return AddIngredientDialog();
+            },
+          );
         },
         tooltip: "Add Ingredient",
         child: Icon(Icons.add),
