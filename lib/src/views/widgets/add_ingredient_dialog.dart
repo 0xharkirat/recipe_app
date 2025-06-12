@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/controllers/ingredients_controller.dart';
+import 'package:recipe_app/src/models/ingredient_dto.dart';
 
 class AddIngredientDialog extends ConsumerStatefulWidget {
   const AddIngredientDialog({super.key});
@@ -16,14 +17,15 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
       "https://placehold.co/250/png?text=Preview+Image";
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
-
-  final TextEditingController _kjPUcontroller = TextEditingController();
-
+  final TextEditingController _kjPUcontroller = TextEditingController(
+    text: "0"
+  );
   final _formKey = GlobalKey<FormState>();
 
   UnitOfMeasurement _selectedUnit = UnitOfMeasurement.g;
+  String? _previewUrl;
 
-  void onSave() {
+  void onSave() async{
     if (_formKey.currentState?.validate() ?? false) {
       // Here you would typically save the ingredient to your database or state management solution
       final name = _nameController.text;
@@ -31,17 +33,26 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
       final kjPerUnit = _kjPUcontroller.text;
 
       // create a new ingredient object
-      final newIngredient = {
-        'name': name,
-        'imageUrl': imageUrl.isNotEmpty ? imageUrl : null,
-        'kilojoulesPerUnit': double.tryParse(kjPerUnit) ?? 0.0,
-        'unitOfMeasurement': _selectedUnit.name,
-      };
+      final newIngredient = IngredientDto(
+        name: name,
+        pictureUrl: imageUrl.isEmpty ? null : imageUrl,
+        kilojoulesPerUnit: double.parse(kjPerUnit),
+        unitOfMeasurement: _selectedUnit.name,
+      );
 
-      ref.read(ingredientsService.notifier).addIngredient(newIngredient);
-
-      // Navigator.of(context).pop(); // Close the dialog
+      await ref.read(ingredientsService.notifier).addIngredient(newIngredient);
+      if (mounted) Navigator.of(context).pop(); // Close the dialog
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController.addListener(() {
+      setState(() {
+        _previewUrl = _urlController.text.trim();
+      });
+    });
   }
 
   @override
@@ -73,22 +84,17 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
               mainAxisSize: MainAxisSize.min,
               spacing: 16.0,
               children: [
-                Builder(
-                  builder: (context) {
-                    final imageUrl = _urlController.text.trim();
-
+                Image.network(
+                  (_previewUrl == null || _previewUrl!.isEmpty)
+                      ? placeholderImage
+                      : _previewUrl!,
+                  height: size.width * 0.5,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
                     return Image.network(
-                      (imageUrl.isEmpty) ? placeholderImage : imageUrl,
+                      placeholderImage,
                       height: size.width * 0.5,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Always show the placeholder image if error occurs
-                        return Image.network(
-                          placeholderImage,
-                          height: size.width * 0.5,
-                          fit: BoxFit.cover,
-                        );
-                      },
                     );
                   },
                 ),
@@ -128,6 +134,7 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
                       ),
                       TextFormField(
                         controller: _kjPUcontroller,
+                       
 
                         decoration: const InputDecoration(
                           labelText: "Kilojoules per unit",
@@ -143,6 +150,12 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return "Please enter KJ per unit";
+                          }
+                          if (double.tryParse(value) == null) {
+                            return "Must be a valid number";
+                          }
+                          if (double.parse(value) < 0) {
+                            return "KJ per unit must be positive";
                           }
                           return null;
                         },
@@ -186,11 +199,7 @@ class _AddIngredientDialogState extends ConsumerState<AddIngredientDialog> {
 
 enum UnitOfMeasurement {
   g("Grams"),
-  kg("Kilograms"),
   ml("Milliliters"),
-  L("Liters"),
-  pcs("Pieces"),
-  tbsp("Tablespoons"),
   tsp("Teaspoons"),
   cup("Cups");
 

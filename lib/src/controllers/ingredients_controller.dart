@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:recipe_app/src/models/ingredient_dto.dart';
 import 'package:recipe_app/src/models/ingredient_model.dart';
 
 class IngredientsController extends AsyncNotifier<List<IngredientModel>> {
@@ -24,28 +25,38 @@ class IngredientsController extends AsyncNotifier<List<IngredientModel>> {
     }
   }
 
-  Future<void> addIngredient(Map<String, dynamic> ingredient) async {
+  Future<void> addIngredient(IngredientDto dto) async {
+    state = const AsyncValue.loading();
 
-    ingredient = {
-      ...ingredient,
-      "id": getLength() + 1, // Simple ID generation
-    };
+    final ingredient = dto.toJson();
 
-    debugPrint("Adding ingredient: $ingredient");
+    try {
+      final response = await _dio.post(
+        "http://localhost:5143/Ingredients/add",
+        data: ingredient,
+      );
+      final ingredientModel = IngredientModel.fromJson(response.data);
+       state = AsyncValue.data([...state.value ?? [], ingredientModel]);
+    } on DioException catch (dioError) {
+      final statusCode = dioError.response?.statusCode;
+      final data = dioError.response?.data;
 
-    final ingredientModel = IngredientModel.fromJson(ingredient);
+      // Try to read the message from structured error body
+      String errorMessage;
+      if (data is Map<String, dynamic> && data.containsKey('message')) {
+        errorMessage = data['message'];
+      } else {
+        errorMessage = dioError.message ?? 'Unknown error occurred';
+      }
 
-    state = AsyncValue.data([...state.value ?? [], ingredientModel]);
+      debugPrint("HTTP $statusCode Error: $errorMessage");
+      state = AsyncValue.error(errorMessage, StackTrace.current);
+    } catch (e, st) {
+      debugPrint("Unexpected error: ${e.toString()}");
+      state = AsyncValue.error(e.toString(), st);
+    }
 
-    // final response = await _dio.post(
-    //   "http://localhost:5143/Ingredients",
-    //   data: ingredient.toJson(),
-    // );
-    // if (response.statusCode == 201) {
-    //   state = AsyncValue.data([...state.value ?? [], ingredient]);
-    // } else {
-    //   throw Exception("Failed to add ingredient");
-    // }
+    // state = AsyncValue.data([...state.value ?? [], ingredientModel]);
   }
 
   int getLength() {
