@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/core/routing.dart';
-import 'package:recipe_app/src/utils/helper.dart';
+import 'package:recipe_app/src/core/helper.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
