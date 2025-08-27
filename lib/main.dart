@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipe_app/src/core/routing.dart';
+import 'package:recipe_app/src/utils/helper.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
+
+  HttpOverrides.global = MyHttpOverrides(); // override bad certificate for developement mode
   runApp(ProviderScope(child: const MyApp()));
 }
 
@@ -11,13 +17,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return ShadApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: goRouter,
       title: 'Recipe App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
     );
   }
 }
